@@ -55,7 +55,7 @@ export function setRendererTheme(theme) {
     } else {
         app.renderer.backgroundColor = RENDERER_THEMES[currentRendererTheme].background;
     }
-    app.view.style.backgroundColor = `#${RENDERER_THEMES[currentRendererTheme].background.toString(16).padStart(6, '0')}`;
+    app.canvas.style.backgroundColor = `#${RENDERER_THEMES[currentRendererTheme].background.toString(16).padStart(6, '0')}`;
     drawGrid();
 }
 
@@ -74,7 +74,7 @@ export async function initRenderer(parentElement) {
         resolution:      window.devicePixelRatio || 1,
         autoDensity:     true,
     });
-    app.view.style.backgroundColor = `#${RENDERER_THEMES[currentRendererTheme].background.toString(16).padStart(6, '0')}`;
+    app.canvas.style.backgroundColor = `#${RENDERER_THEMES[currentRendererTheme].background.toString(16).padStart(6, '0')}`;
     parentElement.appendChild(app.canvas);
 
     gridGraphics   = new PIXI.Graphics(); app.stage.addChild(gridGraphics);
