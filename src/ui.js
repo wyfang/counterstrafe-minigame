@@ -109,8 +109,7 @@ function buildRow(rec) {
     }
     const label = ResultLabels[currentLocale]?.[rec.result] ?? rec.label;
     row.innerHTML =
-        `<span class="h-num">#${rec.n}</span>` +
-        `<span class="h-res" style="color:${rec.color}">${label}</span>` +
+        `<span class="h-num">#${rec.n}<span class="h-res" style="color:${rec.color}">${label}</span></span>` +
         `<div class="h-det">${detHtml}<div class="h-decel-bar" ${barStyle}></div></div>`;
     return row;
 }
