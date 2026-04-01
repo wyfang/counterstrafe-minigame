@@ -1,6 +1,6 @@
 import {
-    HistoryFreestyle, HistoryTTK, SessionLogFreestyle, SessionLogTTK,
-    SessionLogStrafeLab, SessionLogMicroStrafe,
+    HistoryFreestyle, HistoryTTK, HistoryStrafeLab, HistoryMicroStrafe, HistoryRhythm,
+    SessionLogFreestyle, SessionLogTTK, SessionLogStrafeLab, SessionLogMicroStrafe, SessionLogRhythm,
     Feedback, STATE, PlayerState, MODE,
     P_VELOCITY, P_PHASE,
     StrafeLab, MicroStrafe, SymmetryLog, RhythmState,
@@ -10,8 +10,13 @@ import {
 import { PRESETS } from './rhythm.js';
 
 function getArrays() {
-    if (STATE.currentMode === MODE.TTK) return { session: SessionLogTTK };
-    return { session: SessionLogFreestyle };
+    switch (STATE.currentMode) {
+        case MODE.TTK:        return { session: SessionLogTTK };
+        case MODE.STRAFELAB:  return { session: SessionLogStrafeLab };
+        case MODE.MICROSTRAFE:return { session: SessionLogMicroStrafe };
+        case MODE.RHYTHM:     return { session: SessionLogRhythm };
+        default:              return { session: SessionLogFreestyle };
+    }
 }
 
 function decelBarStyle(totalDecelMs, coastMs) {
@@ -116,10 +121,20 @@ export function prependRow(rec) {
     while (list.children.length > 50) list.removeChild(list.lastChild);
 }
 
+function getHistoryArray() {
+    switch (STATE.currentMode) {
+        case MODE.TTK:        return HistoryTTK;
+        case MODE.STRAFELAB:  return HistoryStrafeLab;
+        case MODE.MICROSTRAFE:return HistoryMicroStrafe;
+        case MODE.RHYTHM:     return HistoryRhythm;
+        default:              return HistoryFreestyle;
+    }
+}
+
 export function rebuildHistoryDOM() {
     const list = document.getElementById('hist-list');
     list.innerHTML = '';
-    const history = STATE.currentMode === MODE.TTK ? HistoryTTK : HistoryFreestyle;
+    const history = getHistoryArray();
     history.forEach(rec => list.appendChild(buildRow(rec)));
 }
 
@@ -150,7 +165,8 @@ export function updateSidebar(rec) {
 }
 
 // Dummy callback used by lab modes (no sidebar row needed)
-export function updateSidebarLabMode(_rec) {
+export function updateSidebarLabMode(rec) {
+    if (rec) prependRow(rec);
     updateSymmetryUI();
 }
 
@@ -522,7 +538,7 @@ export function syncRhythmConfig() {
 export function exportHistoryCSV() {
     const { session } = getArrays();
     if (session.length === 0) return;
-    const modeName = STATE.currentMode === MODE.TTK ? 'TTK' : 'Freestyle';
+    const modeName = STATE.currentMode.toUpperCase();
     let csv = 'data:text/csv;charset=utf-8,';
     csv += 'Timestamp,ShotNumber,Mode,Result,Weapon,Speed,TotalDecelMs,CounterStrafeMs,GapMs,OverlapMs,WaitMs,MaxSpeed,CoastMs,TimeToShotMs\n';
     session.forEach(h => {

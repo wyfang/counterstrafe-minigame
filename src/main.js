@@ -4,6 +4,7 @@ import {
     StrafeLab, MicroStrafe, RhythmState, SymmetryLog,
     PlayerState, P_VELOCITY,
     MicroStrafeVisuals,
+    HistoryFreestyle, HistoryTTK, HistoryStrafeLab, HistoryMicroStrafe, HistoryRhythm,
 } from './state.js';
 import { initInput }                              from './input.js';
 import { fireShot, updateTTK, resetTTK }          from './logic.js';
@@ -92,6 +93,7 @@ const TRANSLATIONS = {
         accurate_shots: 'ACCURATE SHOTS REQUIRED',
         left_label: '← Left (A)',
         right_label: 'Right (D) →',
+        units: 'units',
         presets: 'PRESETS',
         bpm: 'BPM',
         vol: 'VOL',
@@ -108,6 +110,7 @@ const TRANSLATIONS = {
         recorded: 'Recorded',
         export_lab_csv: 'Export Lab CSV',
         export_history_csv: 'Export History as CSV',
+        clear_history: 'Clear History',
         retry: 'RETRY',
         back_to_config: 'BACK TO CONFIG',
         sl_desc_strafelab: 'Wide-peek: run the distance fast, shoot at the threshold.',
@@ -157,6 +160,7 @@ const TRANSLATIONS = {
         accurate_shots: '准确射击要求',
         left_label: '← 左 (A)',
         right_label: '右 (D) →',
+        units: '单位',
         presets: '预设',
         bpm: '节奏',
         vol: '音量',
@@ -174,6 +178,7 @@ const TRANSLATIONS = {
         recorded: '记录',
         export_lab_csv: '导出训练 CSV',
         export_history_csv: '导出历史 CSV',
+        clear_history: '清空历史',
         retry: '重试',
         back_to_config: '返回配置',
         sl_desc_strafelab: '宽视野训练：快速完成距离配额，在阈值处射击。',
@@ -292,13 +297,17 @@ function loadPreferences() {
 function updateLanguageButton() {
     const button = document.getElementById('lang-toggle');
     if (!button) return;
-    button.textContent = currentLang === 'en' ? t('lang_target_zh') : t('lang_target_en');
+    // 显示目标语言：当前是英文显示"中文"，当前是中文显示"EN"
+    button.textContent = currentLang === 'en' ? '中文' : 'EN';
+    console.log('updateLanguageButton:', { currentLang, text: button.textContent });
 }
 
 function updateThemeButton() {
     const button = document.getElementById('theme-toggle');
     if (!button) return;
-    button.textContent = currentTheme === 'dark' ? t('theme_target_light') : t('theme_target_dark');
+    // 显示目标主题：当前是暗色显示"Light/亮色"，当前是亮色显示"Dark/暗色"
+    const isDark = currentTheme === 'dark';
+    button.textContent = isDark ? (currentLang === 'zh' ? '亮色' : 'Light') : (currentLang === 'zh' ? '暗色' : 'Dark');
 }
 
 function applyTheme() {
@@ -322,8 +331,6 @@ function translateStatic() {
     setDocumentLang();
     setLocale(currentLang);
     setRendererLocale(currentLang);
-    updateLanguageButton();
-    updateThemeButton();
 }
 
 function refreshModeText() {
@@ -349,6 +356,7 @@ function toggleLanguage() {
     currentLang = currentLang === 'en' ? 'zh' : 'en';
     setDocumentLang();
     translateStatic();
+    updateLanguageButton();
     refreshModeText();
     setInstructions(STATE.currentMode);
     updateAboutPanel(STATE.currentMode);
@@ -358,6 +366,7 @@ function toggleLanguage() {
 function toggleTheme() {
     currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
     applyTheme();
+    updateThemeButton();
     savePreferences();
 }
 
@@ -366,6 +375,7 @@ function setLanguage(lang) {
     currentLang = lang;
     setDocumentLang();
     translateStatic();
+    updateLanguageButton();
     refreshModeText();
     setInstructions(STATE.currentMode);
     updateAboutPanel(STATE.currentMode);
@@ -395,9 +405,11 @@ async function boot() {
     updateBenchmarksUI();
     loadPreferences();
     applyTheme();
-    translateStatic();
     refreshModeText();
     setInstructions(STATE.currentMode);
+    translateStatic();
+    updateLanguageButton();
+    updateThemeButton();
 
     const langBtn = document.getElementById('lang-toggle');
     if (langBtn) langBtn.addEventListener('click', toggleLanguage);
@@ -412,6 +424,20 @@ async function boot() {
     document.getElementById('btn-export').addEventListener('click', () => {
         const isLab = STATE.currentMode === MODE.STRAFELAB || STATE.currentMode === MODE.MICROSTRAFE;
         if (isLab) exportLabCSV(); else exportHistoryCSV();
+    });
+    const clearButton = document.getElementById('btn-clear');
+    if (clearButton) clearButton.addEventListener('click', () => {
+        let history;
+        switch (STATE.currentMode) {
+            case MODE.TTK:        history = HistoryTTK; break;
+            case MODE.STRAFELAB:  history = HistoryStrafeLab; break;
+            case MODE.MICROSTRAFE:history = HistoryMicroStrafe; break;
+            case MODE.RHYTHM:     history = HistoryRhythm; break;
+            default:              history = HistoryFreestyle;
+        }
+        history.length = 0;
+        rebuildHistoryDOM();
+        computeAverages();
     });
 
     // ── Mode tabs ──
@@ -440,7 +466,7 @@ async function boot() {
             document.getElementById('rhy-config').style.display = rhy   ? 'block' : 'none';
             document.getElementById('sl-progress').style.display = 'none';
             document.getElementById('canvas-container').classList.toggle('ttk-armed', ttk);
-            document.getElementById('hist-section').style.display = (isLab || rhy) ? 'none' : 'flex';
+            document.getElementById('hist-section').style.display = 'flex';
             document.getElementById('avg-section').style.display  = (isLab || rhy) ? 'none' : 'block';
             document.getElementById('btn-export').textContent     = isLab ? t('export_lab_csv') : t('export_history_csv');
 
@@ -497,10 +523,24 @@ async function boot() {
     document.getElementById('sym-hdr').addEventListener('click', e => {
         if (e.target.id === 'sym-reset-btn') return;
         const body = document.getElementById('sym-body');
+        const section = document.getElementById('sym-section');
         const toggle = document.getElementById('sym-toggle');
         const hidden = body.style.display === 'none';
         body.style.display = hidden ? 'block' : 'none';
         toggle.textContent = hidden ? '▼' : '▶';
+        if (hidden && section) {
+            const sidebar = document.getElementById('sidebar');
+            requestAnimationFrame(() => {
+                if (sidebar) {
+                    const sidebarRect = sidebar.getBoundingClientRect();
+                    const sectionRect = section.getBoundingClientRect();
+                    const targetTop = sectionRect.top - sidebarRect.top + sidebar.scrollTop;
+                    sidebar.scrollTop = Math.max(0, targetTop - 8);
+                } else {
+                    section.scrollIntoView({ block: 'start', inline: 'nearest' });
+                }
+            });
+        }
     });
 
     // ── Lab results overlay buttons ──

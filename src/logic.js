@@ -3,14 +3,20 @@ import {
     A_ACTIVE, A_DIR, A_START_MS, A_PEAK_SPEED,
     A_GAP_MS, A_OVERLAP_MS, A_COUNTER_MS, A_STOPPED_MS, A_OVERSHOOT_INTEGRAL,
     P_VELOCITY, P_PHASE, PHASE,
-    HistoryFreestyle, HistoryTTK, SessionLogFreestyle, SessionLogTTK,
+    HistoryFreestyle, HistoryTTK, HistoryStrafeLab, HistoryMicroStrafe, HistoryRhythm,
+    SessionLogFreestyle, SessionLogTTK, SessionLogStrafeLab, SessionLogMicroStrafe, SessionLogRhythm,
     HISTORY_MAX, Feedback, SymmetryLog, StrafeLab, MicroStrafe,
 } from './state.js';
 import { recordLabShotEvent, recordLabAbortEvent } from './strafelab.js';
 
 function getArrays() {
-    if (STATE.currentMode === MODE.TTK) return { history: HistoryTTK, session: SessionLogTTK };
-    return { history: HistoryFreestyle, session: SessionLogFreestyle };
+    switch (STATE.currentMode) {
+        case MODE.TTK:        return { history: HistoryTTK,           session: SessionLogTTK };
+        case MODE.STRAFELAB:  return { history: HistoryStrafeLab,     session: SessionLogStrafeLab };
+        case MODE.MICROSTRAFE:return { history: HistoryMicroStrafe, session: SessionLogMicroStrafe };
+        case MODE.RHYTHM:     return { history: HistoryRhythm,      session: SessionLogRhythm };
+        default:              return { history: HistoryFreestyle,   session: SessionLogFreestyle };
+    }
 }
 
 // ── Symmetry log ──
@@ -128,10 +134,35 @@ export function fireShot(now, updateSidebarCallback) {
         return;
     }
 
-    // ── Lab modes: record event, no history row ──
+    // ── Lab modes: record event and add a lightweight history row ──
     if (isLabMode) {
         const wasAccurate = speed <= STATE.ACCURATE_THRESH;
-        recordLabShotEvent(speed, wasAccurate, getAttemptData());
+        const attemptData = getAttemptData();
+        const { history, session } = getArrays();
+        const rec = {
+            n: session.length + 1,
+            timestamp: new Date().toISOString(),
+            mode: STATE.currentMode,
+            result: wasAccurate ? 'HIT' : 'MISS',
+            label: wasAccurate ? 'Accurate' : 'Over',
+            color: wasAccurate ? '#22c55e' : '#ef4444',
+            isSuccess: wasAccurate,
+            isAttempt: true,
+            speed: Math.round(speed),
+            totalDecelMs: Math.round(now - AttemptState[A_START_MS]),
+            csMs: attemptData.csMs,
+            gapMs: attemptData.gapMs,
+            overlapMs: attemptData.overlapMs,
+            stoppedMs: attemptData.stoppedMs,
+            coastMs: Math.round(STATE.COAST_MS),
+            ttsMs: 0,
+            weapon: STATE.WPN.id,
+        };
+        history.unshift(rec);
+        if (history.length > HISTORY_MAX) history.pop();
+        session.push(rec);
+
+        recordLabShotEvent(speed, wasAccurate, attemptData);
         logSymmetry(speed);
 
         // Feedback: delta from accuracy threshold (− = margin under, + = overshoot)
@@ -141,6 +172,7 @@ export function fireShot(now, updateSidebarCallback) {
         Feedback.color   = wasAccurate ? '#22c55e' : '#ef4444';
         Feedback.startMs = now;
 
+        updateSidebarCallback(rec);
         AttemptState[A_ACTIVE] = 0;
         PlayerState[P_PHASE]   = PHASE.IDLE;
         return;
@@ -195,10 +227,37 @@ export function abortAttempt(now, speed, updateSidebarCallback) {
     const { history, session } = getArrays();
     const isLabMode = STATE.currentMode === MODE.STRAFELAB || STATE.currentMode === MODE.MICROSTRAFE;
 
-    // In lab modes, log the attempt data for RTR but don't push a history row
+    // In lab modes, log the attempt data and record a history row
     if (isLabMode) {
+        const attemptData = getAttemptData();
+        const { history, session } = getArrays();
+        const rec = {
+            n: session.length + 1,
+            timestamp: new Date().toISOString(),
+            mode: STATE.currentMode,
+            result: 'ABORTED',
+            label: 'Changed Dir',
+            color: '#6a7880',
+            isSuccess: false,
+            isAttempt: true,
+            speed: Math.round(speed),
+            totalDecelMs: attemptData.csMs + attemptData.gapMs + attemptData.overlapMs + attemptData.stoppedMs,
+            csMs: attemptData.csMs,
+            gapMs: attemptData.gapMs,
+            overlapMs: attemptData.overlapMs,
+            stoppedMs: attemptData.stoppedMs,
+            coastMs: Math.round(STATE.COAST_MS),
+            ttsMs: 0,
+            weapon: STATE.WPN.id,
+            isAbort: true,
+        };
+        history.unshift(rec);
+        if (history.length > HISTORY_MAX) history.pop();
+        session.push(rec);
+
         logSymmetry(speed);
-        recordLabAbortEvent(getAttemptData());
+        recordLabAbortEvent(attemptData);
+        if (updateSidebarCallback) updateSidebarCallback(rec);
         PlayerState[P_PHASE]   = PHASE.STRAFING;
         AttemptState[A_ACTIVE] = 0;
         return;

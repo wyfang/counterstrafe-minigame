@@ -125,20 +125,6 @@
             <span><span data-i18n="coast">Coast</span> <b id="bench-coast">—</b></span>
         </div>
 
-        <!-- ── About (collapsible, swaps per mode) ── -->
-        <div id="about-section">
-            <div id="about-hdr" class="sb-hdr collapsible-hdr">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <div class="sb-dot yellow"></div>
-                    <span id="about-title">Freestyle</span>
-                </div>
-                <span id="about-toggle" class="collapse-arrow">▼</span>
-            </div>
-            <div id="about-body" class="about-body">
-                <p id="about-text"></p>
-            </div>
-        </div>
-
         <!-- ── Averages (Freestyle / TTK) ── -->
         <div id="avg-section">
             <div class="avg-row ttk-only" style="display:none">
@@ -146,12 +132,12 @@
             </div>
             <div class="avg-row"><span data-i18n="avg_gap">Avg gap time</span><span class="avg-val" id="av-gap">—</span></div>
             <div class="avg-row"><span data-i18n="avg_ovl">Avg overlap time</span><span class="avg-val" id="av-ovl">—</span></div>
-            <div class="avg-row"><span data-i18n="av_breakdown">One at a time</span><span class="avg-val" id="av-breakdown" style="font-size:9px;">—</span></div>
+            <div class="avg-row"><span data-i18n="av_breakdown">One at a time</span><span class="avg-val" id="av-breakdown" style="font-size:12px;">—</span></div>
             <div class="avg-row"><span data-i18n="av_cs">Avg CS duration</span><span class="avg-val" id="av-cs">—</span></div>
             <div class="avg-row"><span data-i18n="av_spd">Avg speed at shot</span><span class="avg-val" id="av-spd">—</span></div>
-            <div class="avg-row" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--border)">
-                <span data-i18n="success_rate" style="color:var(--text)">Success rate</span>
-                <span class="avg-val" id="av-rate" style="color:var(--green)">—</span>
+            <div class="avg-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+                <span data-i18n="success_rate">Success rate</span>
+                <span class="avg-val" id="av-rate">—</span>
             </div>
             <div class="avg-row"><span data-i18n="total_shots">Total Shots</span><span class="avg-val" id="av-tot">0</span></div>
             <div class="avg-row"><span data-i18n="total_actions">Total Actions</span><span class="avg-val" id="av-act">0</span></div>
@@ -195,7 +181,7 @@
                     <button class="num-btn-lg" id="sl-quota-dec">−</button>
                     <input type="number" id="sl-quota-custom" class="sl-custom-input" value="400" min="50" max="9999">
                     <button class="num-btn-lg" id="sl-quota-inc">+</button>
-                    <span class="sl-cfg-unit">units</span>
+                    <span class="sl-cfg-unit" data-i18n="units">units</span>
                 </div>
             </div>
             <div class="sl-cfg-section">
@@ -280,15 +266,31 @@
             </div>
         </div>
 
-        <!-- History (Freestyle / TTK) -->
-        <div id="hist-section" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0">
-            <div id="hist-hdr" data-i18n="shot_history">SHOT HISTORY</div>
-            <div id="hist-list"></div>
-            <div id="hist-footer">
-                <button id="btn-export" data-i18n="export_history_csv">Export History as CSV</button>
+        <!-- ── About (collapsible, swaps per mode) ── -->
+        <div id="about-section">
+            <div id="about-hdr" class="sb-hdr collapsible-hdr">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="sb-dot yellow"></div>
+                    <span id="about-title">Freestyle</span>
+                </div>
+                <span id="about-toggle" class="collapse-arrow">▼</span>
+            </div>
+            <div id="about-body" class="about-body">
+                <p id="about-text"></p>
+            </div>
         </div>
 
     </div><!-- /sidebar -->
+
+    <!-- History (Freestyle / TTK) -->
+    <div id="hist-section">
+        <div id="hist-hdr" data-i18n="shot_history">SHOT HISTORY</div>
+        <div id="hist-list"></div>
+        <div id="hist-footer">
+            <button id="btn-clear" data-i18n="clear_history">Clear History</button>
+            <button id="btn-export" data-i18n="export_history_csv">Export History as CSV</button>
+        </div>
+    </div>
 
 </div><!-- /app -->
 <script type="module" src="/src/main.js"></script>

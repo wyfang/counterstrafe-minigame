@@ -84,11 +84,15 @@ export const AttemptState         = new Float64Array(9);
 export const HISTORY_MAX      = 50;
 export const HistoryFreestyle = [];
 export const HistoryTTK       = [];
+export const HistoryStrafeLab = [];
+export const HistoryMicroStrafe = [];
+export const HistoryRhythm    = [];
 
 export const SessionLogFreestyle  = [];
 export const SessionLogTTK        = [];
 export const SessionLogStrafeLab  = [];  // summary per completed SL session
 export const SessionLogMicroStrafe = [];
+export const SessionLogRhythm      = [];
 
 export const Feedback = { active: false, label: '', color: '', startMs: 0 };
 
