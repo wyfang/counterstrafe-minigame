@@ -26,10 +26,6 @@ npm run dev
 npm run build
 ```
 
-## 来源与许可
+## 版权说明
 
-本仓库是 [crankyCS2/counterstrafe-minigame](https://github.com/crankyCS2/counterstrafe-minigame) 的修改版。项目依据 [Mozilla Public License 2.0](./LICENSE) 发布。
-
-上游版权归原作者及贡献者所有；本 Fork 的原创修改继续受 MPL-2.0 约束。
-
-完整归属与适用范围见 [NOTICE](./NOTICE) 与 [LICENSE_SCOPE.md](./LICENSE_SCOPE.md)。
+本项目基于 [crankyCS2/counterstrafe-minigame](https://github.com/crankyCS2/counterstrafe-minigame)，依据 [Mozilla Public License 2.0](./LICENSE) 发布。上游版权归原作者及贡献者所有；个人品牌和素材不在许可范围内。
